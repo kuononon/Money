@@ -17,6 +17,6 @@ skiprows=[1] 2行目は飛ばして読み込める
 header=1 2行目から読み込める
 usecols="A,B" A,B列を読み込む
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]
-(https://colab.research.google.com/github/ユーザー名/リポジトリ名/blob/main/ファイル名.ipynb)
+https://github.com/username/repo_name/blob/main/MK0.ipynb
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/username/repo_name/blob/main/MK0.ipynb)
 
