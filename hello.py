@@ -1,5 +1,8 @@
 import pandas as pd
-# Excelファイルを読み込み
+import tkinter as tk
+from tkinter import ttk
+
+# Excel読み込み
 df = pd.read_excel("202602_DC.xlsx",skiprows=[1],usecols="B,C,D,G")
 
 # お支払日をExcelの日付形式からdatetimeに変換
@@ -9,6 +12,17 @@ df["ご利用日"] = pd.to_datetime(df["ご利用日"], origin="1899-12-30", uni
 
 # ご利用金額（円）を数値に変換
 df["ご利用金額（円）"] = df["ご利用金額（円）"].astype("Int64")
+
+# データの先頭5行を表示
+print(df.head())
+
+# Tkinter画面作成
+root = tk.Tk()
+root.title("Excelデータ表示")
+root.geometry("800x400")
+
+# 表（Treeview）作成
+tree = ttk.Treeview(root)
 
 monthly_sum = (
     df.groupby(df["お支払日"].dt.to_period("M"))["ご利用金額（円）"]
