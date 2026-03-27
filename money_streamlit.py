@@ -12,6 +12,11 @@ st.title("生活費管理ツール")
 if "df" not in st.session_state:
     st.session_state.df = None
 
+if "income_df" not in st.session_state:
+    st.session_state.income_df = pd.DataFrame(
+        columns=["日付", "内容", "金額"]
+    )
+
 categories = ['食費', '教養教育', 'ほの', '交通費', '通信費', '消耗品費', '健康医療', '未分類']
 types = ['生活費', '自費']
 
@@ -174,6 +179,21 @@ if st.session_state.df is not None:
     st.write("### カード別合計")
     st.dataframe(card_total)
 
+    st.write("### カード別（自費のみ）")
+
+    self_expense = edited_df[
+    edited_df["区分"].fillna("").str.strip() == "自費"
+    ]
+
+    card_self_total = (
+    self_expense
+    .groupby("カード")["ご利用金額"]
+    .sum()
+    .reset_index()
+    )
+
+    st.dataframe(card_self_total)
+
     # =============================
     # 🔹 保存形式選択
     # =============================
@@ -248,3 +268,102 @@ if st.session_state.df is not None:
             data=output.getvalue(),
             file_name=file_name
         )
+
+# =============================
+# 🔹 収入管理
+# =============================
+
+st.subheader("収入入力")
+
+with st.form("income_form"):
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        date = st.date_input("収入日")
+    with col2:
+        description = st.text_input("収入内容")
+    with col3:
+        amount = st.number_input("収入金額", min_value=0)
+
+    submitted = st.form_submit_button("追加")
+
+    if submitted:
+        new_row = {
+            "日付": pd.to_datetime(date),
+            "内容": description,
+            "金額": amount
+        }
+
+        st.session_state.income_df = pd.concat(
+            [st.session_state.income_df, pd.DataFrame([new_row])],
+            ignore_index=True
+        )
+
+        st.session_state.income_df = (
+            st.session_state.income_df
+            .sort_values("日付")
+            .reset_index(drop=True)
+        )
+
+        st.success("収入を追加しました！")
+
+
+# =============================
+# 🔹 収入一覧
+# =============================
+
+st.subheader("収入一覧")
+
+income_df = st.session_state.income_df.copy()
+
+if not income_df.empty:
+
+    income_df["年月"] = income_df["日付"].dt.to_period("M").astype(str)
+
+    edited_income_df = st.data_editor(
+        income_df,
+        column_config={
+            "日付": st.column_config.DateColumn("日付", format="YYYY年M月D日")
+        },
+        use_container_width=True,
+        hide_index=True,
+        key="income_editor"
+    )
+
+    st.session_state.income_df = edited_income_df
+
+jal_self_df = edited_df[
+(edited_df["カード"] == "JAL") &
+(edited_df["区分"].fillna("").str.strip() == "自費")
+].copy()
+    # =============================
+# JAL自費合計
+# =============================
+jal_total = jal_self_df["ご利用金額"].sum()
+
+# =============================
+# 今月
+# =============================
+today = pd.Timestamp.today()
+this_month = today.to_period("M")
+
+# =============================
+# 10日までの収入
+# =============================
+start = pd.Timestamp(f"{this_month}-01")
+end = pd.Timestamp(f"{this_month}-10")
+
+income_total = income_df[
+    (income_df["日付"] >= start) &
+    (income_df["日付"] <= end)
+]["金額"].sum()
+
+# =============================
+# 差（借金）
+# =============================
+debt = jal_total - income_total
+
+# =============================
+# 表示
+# =============================
+st.metric("借金", f"{debt:,.0f} 円")
