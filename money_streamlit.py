@@ -12,7 +12,7 @@ st.title("生活費管理ツール")
 if "df" not in st.session_state:
     st.session_state.df = None
 
-categories = ['食費', '交通費', '通信費', '消耗品費', '未分類']
+categories = ['食費', '教養教育', 'ほの', '交通費', '通信費', '消耗品費', '健康医療', '未分類']
 types = ['生活費', '自費']
 
 # =============================
@@ -68,7 +68,7 @@ if jal_files:
     for file in jal_files:
         df = pd.read_csv(file, encoding="cp932", header=0)
         all_df.append(normalize_jal(df))
-if all_df and st.session_state.df is None:
+if all_df :
     merged_df = pd.concat(all_df, ignore_index=True)
     merged_df = merged_df.sort_values("ご利用日")
     st.session_state.df = merged_df
@@ -93,7 +93,7 @@ if st.session_state.df is not None:
 
         category = st.selectbox(
             "費目",
-            ['食費', '交通費', '通信費', '消耗品費', '未分類']
+            ['食費', '教養教育', 'ほの', '交通費', '通信費', '消耗品費', '健康医療', '未分類']
         )
         payment_type = st.selectbox(
             "区分",
@@ -135,6 +135,7 @@ if st.session_state.df is not None:
 
     edited_df = st.data_editor(
         df,
+        key="editor",
         column_config={
             "費目": st.column_config.SelectboxColumn("費目", options=categories),
             "区分": st.column_config.SelectboxColumn("区分", options=types),
@@ -182,13 +183,7 @@ if st.session_state.df is not None:
     if file_type == "CSV（ZIP）":
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zf:
-            zf.writestr("monthly_total.csv", monthly_total.to_csv(index=False))
-            zf.writestr("monthly_category.csv", monthly_category.to_csv(index=False))
-            zf.writestr("monthly_type.csv", monthly_type.to_csv(index=False))
-            zf.writestr("type_category.csv", type_category.to_csv(index=False))
-            zf.writestr("card_total.csv", card_total.to_csv(index=False))
-            zf.writestr("card_month.csv", card_month.to_csv(index=False))
-            zf.writestr("card_category.csv", card_category.to_csv(index=False))
+            zf.writestr("card_all.csv", edited_df.to_csv(index=False))
         st.download_button(
             "CSVまとめてダウンロード",
             data=zip_buffer.getvalue(),
